@@ -80,7 +80,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-8">
-                                <h3 class="mb-0">₹{{ "{:,.0f}".format(claims|sum(attribute='cost_estimate') or 0) }}</h3>
+                                <h3 class="mb-0">Rupee:{{ "{:,.0f}".format(claims|sum(attribute='cost_estimate') or 0) }}</h3>
                                 <p class="mb-0">Total Claims Value</p>
                             </div>
                             <div class="col-4 text-end">
@@ -179,7 +179,7 @@
                                     </td>
                                     <td>
                                         {% if claim.cost_estimate %}
-                                            <strong>₹{{ "{:,.0f}".format(claim.cost_estimate) }}</strong>
+                                            <strong>Rupee:{{ "{:,.0f}".format(claim.cost_estimate) }}</strong>
                                         {% else %}
                                             <span class="text-muted">Pending</span>
                                         {% endif %}
