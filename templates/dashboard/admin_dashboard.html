@@ -285,7 +285,7 @@
                                     </td>
                                     <td>
                                         {% if claim.cost_estimate %}
-                                            <strong>₹{{ "{:,.0f}".format(claim.cost_estimate) }}</strong>
+                                            <strong>Rupee:{{ "{:,.0f}".format(claim.cost_estimate) }}</strong>
                                         {% else %}
                                             <span class="text-muted">Pending</span>
                                         {% endif %}

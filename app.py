@@ -209,7 +209,7 @@ def new_claim():
                 with open(filepath, 'rb') as f:
                     image_hash = hashlib.sha256(f.read()).hexdigest()
                 
-                # Extract EXIF data (simplified for hackathon)
+                # Extract EXIF data
                 exif_data = {'timestamp': timestamp, 'filename': filename}
                 
                 claim_image = ClaimImage(

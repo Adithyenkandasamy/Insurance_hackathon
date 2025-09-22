@@ -276,13 +276,13 @@ class ReportGenerator:
         # Cost breakdown table
         cost_data = [
             ['Item', 'Amount'],
-            ['Estimated Repair Cost', f'₹{claim.cost_estimate:,.2f}'],
-            ['Processing Fee', '₹500.00'],
-            ['Assessment Fee', '₹300.00'],
+            ['Estimated Repair Cost', f'Rupee:{claim.cost_estimate:,.2f}'],
+            ['Processing Fee', 'Rupee:500.00'],
+            ['Assessment Fee', 'Rupee:300.00'],
         ]
         
         total_cost = claim.cost_estimate + 800  # Add fees
-        cost_data.append(['Total Estimated Amount', f'₹{total_cost:,.2f}'])
+        cost_data.append(['Total Estimated Amount', f'Rupee:{total_cost:,.2f}'])
         
         cost_table = Table(cost_data, colWidths=[3*inch, 2*inch])
         cost_table.setStyle(TableStyle([
