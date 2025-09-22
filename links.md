@@ -1,0 +1,1 @@
+[kaggle dataset for the images -1 ](https://www.kaggle.com/datasets/imnandini/analytics-vidya-ripik-ai-hackfest)
