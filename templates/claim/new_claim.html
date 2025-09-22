@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}New Claim - InsuranceAI{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="py-4 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">New Claim</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-plus-circle text-primary"></i> Submit New Insurance Claim
+                </h1>
+                <p class="text-muted mb-0">Upload photos and let AI analyze your claim instantly</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Claim Form -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-earmark-text"></i> Claim Information
+                        </h5>
+                    </div>
+                    
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" id="claimForm">
+                            <!-- Basic Information -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="policy_number" class="form-label">Policy Number *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-card-text"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="policy_number" name="policy_number" 
+                                               required placeholder="e.g., POL123456789">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="accident_date" class="form-label">Accident Date *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-calendar"></i>
+                                        </span>
+                                        <input type="date" class="form-control" id="accident_date" name="accident_date" 
+                                               required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="location" class="form-label">Accident Location *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="location" name="location" 
+                                           required placeholder="e.g., Main Street, Downtown, City, State">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="description" class="form-label">Incident Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" 
+                                          placeholder="Describe what happened during the accident (optional)"></textarea>
+                            </div>
+
+                            <!-- Photo Upload Section -->
+                            <div class="mb-4">
+                                <h5 class="text-primary mb-3">
+                                    <i class="bi bi-camera"></i> Upload Damage Photos
+                                </h5>
+                                <p class="text-muted small mb-3">
+                                    Upload clear photos from multiple angles for accurate AI analysis. 
+                                    Supported formats: JPG, PNG, WebP (Max 5MB each)
+                                </p>
+                                
+                                <!-- Upload Instructions -->
+                                <div class="alert alert-info">
+                                    <h6><i class="bi bi-info-circle"></i> Photo Guidelines:</h6>
+                                    <ul class="mb-0 small">
+                                        <li>Take photos in good lighting conditions</li>
+                                        <li>Include multiple angles: front, rear, sides, and top view</li>
+                                        <li>Show both overall vehicle and close-up damage shots</li>
+                                        <li>Ensure images are clear and in focus</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Photo Upload Areas -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="upload-area" data-angle="front">
+                                            <i class="bi bi-camera text-muted" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Front View</h6>
+                                            <p class="small text-muted">Front bumper, headlights, grille</p>
+                                            <input type="file" class="form-control d-none" accept="image/*" name="images" data-angle="front">
+                                            <button type="button" class="btn btn-outline-primary btn-sm upload-btn">
+                                                <i class="bi bi-cloud-upload"></i> Choose Photo
+                                            </button>
+                                            <div class="preview-container mt-2 d-none"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <div class="upload-area" data-angle="rear">
+                                            <i class="bi bi-camera text-muted" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Rear View</h6>
+                                            <p class="small text-muted">Rear bumper, taillights, trunk</p>
+                                            <input type="file" class="form-control d-none" accept="image/*" name="images" data-angle="rear">
+                                            <button type="button" class="btn btn-outline-primary btn-sm upload-btn">
+                                                <i class="bi bi-cloud-upload"></i> Choose Photo
+                                            </button>
+                                            <div class="preview-container mt-2 d-none"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <div class="upload-area" data-angle="side">
+                                            <i class="bi bi-camera text-muted" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Side View</h6>
+                                            <p class="small text-muted">Doors, windows, side panels</p>
+                                            <input type="file" class="form-control d-none" accept="image/*" name="images" data-angle="side">
+                                            <button type="button" class="btn btn-outline-primary btn-sm upload-btn">
+                                                <i class="bi bi-cloud-upload"></i> Choose Photo
+                                            </button>
+                                            <div class="preview-container mt-2 d-none"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <div class="upload-area" data-angle="top">
+                                            <i class="bi bi-camera text-muted" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Top/Detail View</h6>
+                                            <p class="small text-muted">Roof, close-up damage shots</p>
+                                            <input type="file" class="form-control d-none" accept="image/*" name="images" data-angle="top">
+                                            <button type="button" class="btn btn-outline-primary btn-sm upload-btn">
+                                                <i class="bi bi-cloud-upload"></i> Choose Photo
+                                            </button>
+                                            <div class="preview-container mt-2 d-none"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hidden inputs for angles -->
+                                <div id="angleInputs"></div>
+                            </div>
+
+                            <!-- AI Analysis Preview -->
+                            <div class="mb-4" id="analysisPreview" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i class="bi bi-cpu"></i> AI Analysis Preview
+                                </h5>
+                                <div class="alert alert-info">
+                                    <div class="row">
+                                        <div class="col-md-4 text-center">
+                                            <i class="bi bi-search text-primary" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Damage Detection</h6>
+                                            <p class="small mb-0">AI will analyze damage types and severity</p>
+                                        </div>
+                                        <div class="col-md-4 text-center">
+                                            <i class="bi bi-shield-check text-success" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Fraud Protection</h6>
+                                            <p class="small mb-0">Advanced fraud detection algorithms</p>
+                                        </div>
+                                        <div class="col-md-4 text-center">
+                                            <i class="bi bi-currency-dollar text-warning" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Cost Estimation</h6>
+                                            <p class="small mb-0">Accurate repair cost calculation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-md-2">
+                                    <i class="bi bi-arrow-left"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="bi bi-cpu"></i> Submit & Analyze with AI
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Processing Modal -->
+<div class="modal fade" id="processingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>AI Analysis in Progress...</h5>
+                <p class="text-muted mb-0">Please wait while our AI analyzes your claim</p>
+                <div class="progress mt-3" style="height: 8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set max date to today
+    document.getElementById('accident_date').max = new Date().toISOString().split('T')[0];
+    
+    // Photo upload handling
+    const uploadAreas = document.querySelectorAll('.upload-area');
+    const form = document.getElementById('claimForm');
+    let uploadedFiles = {};
+    
+    uploadAreas.forEach(area => {
+        const fileInput = area.querySelector('input[type="file"]');
+        const uploadBtn = area.querySelector('.upload-btn');
+        const previewContainer = area.querySelector('.preview-container');
+        const angle = area.dataset.angle;
+        
+        // Click to upload
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // Drag and drop
+        area.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            area.classList.add('dragover');
+        });
+        
+        area.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+        });
+        
+        area.addEventListener('drop', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0], angle, area);
+            }
+        });
+        
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0], angle, area);
+            }
+        });
+    });
+    
+    function handleFileUpload(file, angle, area) {
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            alert('Please upload only image files');
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            return;
+        }
+        
+        // Store file
+        uploadedFiles[angle] = file;
+        
+        // Update UI
+        const previewContainer = area.querySelector('.preview-container');
+        const uploadBtn = area.querySelector('.upload-btn');
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewContainer.innerHTML = `
+                <div class="position-relative d-inline-block">
+                    <img src="${e.target.result}" class="img-thumbnail" style="max-width: 150px; max-height: 100px;">
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 remove-btn" 
+                            style="transform: translate(50%, -50%);" data-angle="${angle}">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div class="small text-success mt-1">
+                    <i class="bi bi-check-circle"></i> ${file.name}
+                </div>
+            `;
+            previewContainer.classList.remove('d-none');
+            
+            // Update upload button
+            uploadBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Change Photo';
+            uploadBtn.classList.remove('btn-outline-primary');
+            uploadBtn.classList.add('btn-outline-success');
+            
+            // Show analysis preview if at least one image uploaded
+            if (Object.keys(uploadedFiles).length > 0) {
+                document.getElementById('analysisPreview').style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        // Add hidden input for angle
+        updateAngleInputs();
+    }
+    
+    // Remove file
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-btn')) {
+            const angle = e.target.closest('.remove-btn').dataset.angle;
+            delete uploadedFiles[angle];
+            
+            const area = document.querySelector(`[data-angle="${angle}"]`);
+            const previewContainer = area.querySelector('.preview-container');
+            const uploadBtn = area.querySelector('.upload-btn');
+            const fileInput = area.querySelector('input[type="file"]');
+            
+            // Reset UI
+            previewContainer.classList.add('d-none');
+            previewContainer.innerHTML = '';
+            uploadBtn.innerHTML = '<i class="bi bi-cloud-upload"></i> Choose Photo';
+            uploadBtn.classList.remove('btn-outline-success');
+            uploadBtn.classList.add('btn-outline-primary');
+            fileInput.value = '';
+            
+            updateAngleInputs();
+            
+            // Hide analysis preview if no images
+            if (Object.keys(uploadedFiles).length === 0) {
+                document.getElementById('analysisPreview').style.display = 'none';
+            }
+        }
+    });
+    
+    function updateAngleInputs() {
+        const angleInputsContainer = document.getElementById('angleInputs');
+        angleInputsContainer.innerHTML = '';
+        
+        Object.keys(uploadedFiles).forEach(angle => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'angles';
+            input.value = angle;
+            angleInputsContainer.appendChild(input);
+        });
+    }
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        // Check if at least one image is uploaded
+        if (Object.keys(uploadedFiles).length === 0) {
+            e.preventDefault();
+            alert('Please upload at least one photo to proceed with AI analysis');
+            return;
+        }
+        
+        // Show processing modal
+        const modal = new bootstrap.Modal(document.getElementById('processingModal'));
+        modal.show();
+        
+        // Simulate processing time for demo
+        setTimeout(() => {
+            // Modal will be hidden by page redirect
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

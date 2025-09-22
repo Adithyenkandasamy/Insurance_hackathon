@@ -95,19 +95,19 @@ def calculate_damage_score(detected_damages):
 
 ## Implementation Steps
 
-### Phase 1: Data Preparation (Day 1)
+### Phase 1: Data Preparation 
 1. Collect and curate datasets
 2. Data augmentation and preprocessing
 3. Create damage severity labels
 4. Split data (train/validation/test)
 
-### Phase 2: Model Development (Day 2)
+### Phase 2: Model Development 
 1. Train damage detection models
 2. Implement severity classification
 3. Develop cost estimation algorithms
 4. Create ensemble models for better accuracy
 
-### Phase 3: Application Development (Day 3)
+### Phase 3: Application Development 
 1. Build web interface for image upload
 2. Integrate AI models with backend
 3. Create damage assessment dashboard
