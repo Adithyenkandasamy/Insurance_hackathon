@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Table, Alert, ProgressBar, Dropdown } from 'react-bootstrap';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ImageUpload from '../components/ImageUpload';
 import ReportGenerator from '../components/ReportGenerator';
+import CarVerification from '../components/CarVerification';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const ViewClaim = () => {
   const { id } = useParams();
-  // const { user } = useAuth(); // Commented out as not used
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [claim, setClaim] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [claimImages, setClaimImages] = useState([]);
   const [showReportModal, setShowReportModal] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchClaim();
@@ -24,17 +24,13 @@ const ViewClaim = () => {
     try {
       const response = await axios.get(`/claims/${id}`);
       setClaim(response.data);
-      // Set claim images for the ImageUpload component
-      if (response.data.images) {
-        setClaimImages(response.data.images);
-      }
     } catch (error) {
       if (error.response?.status === 404) {
         toast.error('Claim not found');
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       } else if (error.response?.status === 403) {
         toast.error('Access denied');
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       } else {
         toast.error('Failed to fetch claim details');
       }
@@ -47,7 +43,6 @@ const ViewClaim = () => {
     fetchClaim();
   }, [fetchClaim]);
 
-  const { user } = useAuth();
   const isAdmin = user?.is_admin;
 
   const updateClaimStatus = async (newStatus) => {
@@ -159,12 +154,19 @@ const ViewClaim = () => {
                 Generate Report
               </Button>
               <ReportGenerator claim={claim} />
-              <Button variant="outline-secondary" onClick={() => navigate('/dashboard')}>
+              <Button variant="outline-secondary" onClick={() => navigate('/dashboard', { replace: true })}>
                 <i className="bi bi-arrow-left me-2"></i>
                 Back
               </Button>
             </div>
           </div>
+        </Col>
+      </Row>
+      
+      {/* Car Verification Section */}
+      <Row className="mb-4">
+        <Col>
+          <CarVerification claimId={claim.id} isAdmin={user?.is_admin} />
         </Col>
       </Row>
 
@@ -406,68 +408,14 @@ const ViewClaim = () => {
             <Card.Header>
               <h5 className="mb-0">
                 <i className="bi bi-images me-2"></i>
-                Submitted Evidence ({claimImages.length} files)
+                Submitted Evidence
               </h5>
             </Card.Header>
             <Card.Body>
-              {claimImages.length === 0 ? (
-                <div className="text-center py-4 text-muted">
-                  <i className="bi bi-images" style={{fontSize: '2rem', opacity: 0.3}}></i>
-                  <p className="mt-2 mb-0">No images submitted with this claim.</p>
-                </div>
-              ) : (
-                <Row>
-                  {claimImages.map((image, index) => (
-                    <Col md={4} lg={3} className="mb-3" key={index}>
-                      <Card className="h-100 border-0 shadow-sm">
-                        <div className="position-relative">
-                          <img 
-                            src={`/static/${image.image_path}`}
-                            className="card-img-top"
-                            style={{ 
-                              height: '150px', 
-                              objectFit: 'cover',
-                              cursor: 'pointer'
-                            }}
-                            alt={`Evidence ${index + 1}`}
-                            onClick={() => window.open(`/static/${image.image_path}`, '_blank')}
-                          />
-                          {image.angle && (
-                            <Badge 
-                              bg="primary"
-                              className="position-absolute top-0 start-0 m-2"
-                            >
-                              {image.angle.charAt(0).toUpperCase() + image.angle.slice(1)} View
-                            </Badge>
-                          )}
-                          {image.ai_analysis && (
-                            <Badge 
-                              bg="success"
-                              className="position-absolute top-0 end-0 m-2"
-                            >
-                              <i className="bi bi-robot"></i> Analyzed
-                            </Badge>
-                          )}
-                        </div>
-                        <Card.Body className="p-2">
-                          <div className="small text-muted">
-                            Uploaded: {new Date(image.uploaded_at).toLocaleDateString()}
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline-primary"
-                            className="w-100 mt-2"
-                            onClick={() => window.open(`/static/${image.image_path}`, '_blank')}
-                          >
-                            <i className="bi bi-eye me-1"></i>
-                            View Full Size
-                          </Button>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
-              )}
+              <div className="text-center py-4 text-muted">
+                <i className="bi bi-images" style={{fontSize: '2rem', opacity: 0.3}}></i>
+                <p className="mt-2 mb-0">No images submitted with this claim.</p>
+              </div>
               <Alert variant="info" className="mt-3 mb-0">
                 <i className="bi bi-info-circle me-2"></i>
                 <strong>Note:</strong> Images cannot be modified after claim submission for security and audit purposes.

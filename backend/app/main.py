@@ -3,11 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import os
+import sys
 
-from .database import engine, get_database, Base
-from .models import User
-from .auth import get_password_hash
-from .routers import auth, claims, admin, contact
+# Create tables
+from app.database import engine, get_database, Base
+from app.models import User
+from app.auth import get_password_hash
+from .routers import auth, claims, admin, contact, car_verification
+
+print("Python Path:", sys.path)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -37,6 +41,7 @@ app.include_router(auth.router)
 app.include_router(claims.router)
 app.include_router(admin.router)
 app.include_router(contact.router)
+app.include_router(car_verification.router)
 
 @app.get("/")
 async def root():
