@@ -166,6 +166,9 @@ async def create_claim(
 @router.get("/{claim_id}/report")
 async def generate_report(
     claim_id: int,
+    format: str = 'pdf',
+    include_images: bool = True,
+    include_analysis: bool = True,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_database)
 ):
@@ -177,5 +180,25 @@ async def generate_report(
     if not current_user.is_admin and claim.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    report_path = report_generator.generate_pdf_report(claim)
-    return FileResponse(report_path, filename=f'claim_report_{claim.id}.pdf')
+    # Load claim images
+    claim.images = db.query(ClaimImage).filter(ClaimImage.claim_id == claim_id).all()
+    
+    try:
+        report_path = report_generator.generate_pdf_report(
+            claim, 
+            format=format, 
+            include_images=include_images, 
+            include_analysis=include_analysis
+        )
+        
+        if os.path.exists(report_path):
+            return FileResponse(
+                report_path, 
+                filename=f'claim_report_{claim.id}.pdf',
+                media_type='application/pdf'
+            )
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate report")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")

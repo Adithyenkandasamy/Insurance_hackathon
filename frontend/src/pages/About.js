@@ -166,10 +166,10 @@ const About = () => {
                        style={{width: '80px', height: '80px', fontSize: '1.5rem'}}>
                     AI
                   </div>
-                  <h5 className="card-title">Dr. Alex Chen</h5>
-                  <p className="text-muted">CEO & Co-Founder</p>
+                  <h5 className="card-title">Dayanithi.M</h5>
+                  <p className="text-muted">Data Science Developer</p>
                   <p className="card-text">
-                    Former Google AI researcher with 15+ years in computer vision and machine learning.
+                    he is the guy who found the datasets and models.
                   </p>
                 </Card.Body>
               </Card>
@@ -179,12 +179,12 @@ const About = () => {
                 <Card.Body>
                   <div className="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" 
                        style={{width: '80px', height: '80px', fontSize: '1.5rem'}}>
-                    SM
+                    Ui/Ux
                   </div>
-                  <h5 className="card-title">Sarah Mitchell</h5>
-                  <p className="text-muted">CTO & Co-Founder</p>
+                  <h5 className="card-title">Ashwadhda.C</h5>
+                  <p className="text-muted">UI/UX</p>
                   <p className="card-text">
-                    Insurance industry veteran with 20+ years experience in claims processing and risk assessment.
+                   She Done the Ui/Ux in the figma.
                   </p>
                 </Card.Body>
               </Card>
@@ -194,12 +194,12 @@ const About = () => {
                 <Card.Body>
                   <div className="rounded-circle bg-warning text-dark d-inline-flex align-items-center justify-content-center mb-3" 
                        style={{width: '80px', height: '80px', fontSize: '1.5rem'}}>
-                    RK
+                    WF
                   </div>
-                  <h5 className="card-title">Raj Kumar</h5>
-                  <p className="text-muted">Head of AI Research</p>
+                  <h5 className="card-title">Nisha</h5>
+                  <p className="text-muted"></p>
                   <p className="card-text">
-                    PhD in Machine Learning from MIT, specializing in fraud detection and anomaly recognition.
+                    She developed the wire frame and other functionalities.
                   </p>
                 </Card.Body>
               </Card>

@@ -16,7 +16,7 @@ const Home = () => {
               <h1 className="display-4 fw-bold mb-4">
                 SecureGuard Insurance
               </h1>
-              <p className="display-6 mb-3 text-primary fw-semibold">
+              <p className="display-6 mb-3 text-white-50 fw-semibold">
                 Claims Processing Made Simple
               </p>
               <p className="lead mb-4">

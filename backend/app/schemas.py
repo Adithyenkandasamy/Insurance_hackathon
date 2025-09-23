@@ -27,6 +27,19 @@ class ClaimCreate(BaseModel):
     location: str
     description: str
 
+class ClaimImageResponse(BaseModel):
+    id: int
+    claim_id: int
+    image_path: str
+    image_hash: str
+    angle: str
+    ai_analysis: Optional[dict]
+    exif_metadata: Optional[dict]
+    uploaded_at: datetime
+    
+    class Config:
+        from_attributes = True
+
 class ClaimResponse(BaseModel):
     id: int
     user_id: int
@@ -35,10 +48,11 @@ class ClaimResponse(BaseModel):
     location: str
     description: str
     status: str
-    damage_score: float
-    cost_estimate: float
-    fraud_score: float
-    ai_analysis: Optional[dict]
+    damage_score: Optional[float] = None
+    cost_estimate: Optional[float] = None
+    fraud_score: Optional[float] = None
+    ai_analysis: Optional[dict] = None
+    images: Optional[List[ClaimImageResponse]] = []
     created_at: datetime
     updated_at: datetime
     

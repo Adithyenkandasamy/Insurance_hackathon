@@ -55,7 +55,7 @@ const Login = () => {
       <Row className="justify-content-center">
         <Col md={6} lg={5}>
           <Card className="shadow-lg border-0">
-            <Card.Header className="bg-insurance-primary text-white text-center py-4">
+            <Card.Header className="bg-primary text-white text-center py-4">
               <div className="mb-2">
                 <i className="bi bi-shield-fill" style={{fontSize: '2.5rem'}}></i>
               </div>

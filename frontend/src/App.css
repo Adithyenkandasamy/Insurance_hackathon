@@ -8,7 +8,6 @@ body {
 }
 
 .main-content {
-  padding-top: 76px;
   min-height: 100vh;
 }
 
@@ -16,7 +15,8 @@ body {
 .hero-section {
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
   color: white;
-  padding: 120px 0;
+  padding: 100px 0 120px 0;
+  margin-top: 76px;
   position: relative;
   overflow: hidden;
 }

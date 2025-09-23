@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Card, Badge, Button, Table, Alert, ProgressBar } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Table, Alert, ProgressBar, Dropdown } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ImageUpload from '../components/ImageUpload';
@@ -47,14 +47,65 @@ const ViewClaim = () => {
     fetchClaim();
   }, [fetchClaim]);
 
+  const { user } = useAuth();
+  const isAdmin = user?.is_admin;
+
+  const updateClaimStatus = async (newStatus) => {
+    try {
+      await axios.put(`/admin/claims/${id}/status`, { status: newStatus });
+      setClaim(prev => ({
+        ...prev,
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      }));
+      toast.success(`Claim status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating claim status:', error);
+      toast.error('Failed to update claim status');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const variants = {
-      pending: 'warning',
-      approved: 'success',
-      rejected: 'danger',
-      review: 'info'
+      pending: { bg: 'warning', text: 'Pending' },
+      approved: { bg: 'success', text: 'Approved' },
+      rejected: { bg: 'danger', text: 'Rejected' },
+      review: { bg: 'info', text: 'Under Review' }
     };
-    return <Badge bg={variants[status] || 'secondary'}>{status}</Badge>;
+    const statusInfo = variants[status] || { bg: 'secondary', text: status };
+    return <Badge bg={statusInfo.bg} className="text-capitalize">{statusInfo.text}</Badge>;
+  };
+
+  const getStatusOptions = () => {
+    if (!isAdmin) return null;
+    
+    const statuses = [
+      { value: 'pending', label: 'Mark as Pending' },
+      { value: 'review', label: 'Mark for Review' },
+      { value: 'approved', label: 'Approve Claim' },
+      { value: 'rejected', label: 'Reject Claim' }
+    ];
+
+    return (
+      <Dropdown className="d-inline ms-2">
+        <Dropdown.Toggle variant="outline-secondary" size="sm" id="status-dropdown">
+          Update Status
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          {statuses.map(({ value, label }) => (
+            <Dropdown.Item 
+              key={value} 
+              onClick={() => updateClaimStatus(value)}
+              disabled={claim.status === value}
+              className={claim.status === value ? 'bg-light' : ''}
+            >
+              {label}
+              {claim.status === value && <i className="bi bi-check2 ms-2"></i>}
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Menu>
+      </Dropdown>
+    );
   };
 
   const getRiskBadge = (score) => {
@@ -64,9 +115,11 @@ const ViewClaim = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
   };
 
@@ -129,7 +182,10 @@ const ViewClaim = () => {
                     <tbody>
                       <tr>
                         <td><strong>Status:</strong></td>
-                        <td>{getStatusBadge(claim.status)}</td>
+                        <td className="d-flex align-items-center">
+                          {getStatusBadge(claim.status)}
+                          {getStatusOptions()}
+                        </td>
                       </tr>
                       <tr>
                         <td><strong>Accident Date:</strong></td>

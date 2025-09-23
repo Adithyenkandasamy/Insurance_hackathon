@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -13,8 +13,6 @@ const Contact = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState({});
-  const [user, setUser] = useState(null);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -113,67 +111,6 @@ const Contact = () => {
     window.location.href = 'tel:+911234567890';
   };
 
-  useEffect(() => {
-    // Check for token in URL parameters (from Google OAuth callback)
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const name = urlParams.get('name');
-    const email = urlParams.get('email');
-    
-    if (token) {
-      // Store token and set user data
-      localStorage.setItem('access_token', token);
-      setUser({ name, email });
-      setFormData({ name, email, subject: '', message: '' });
-      toast.success(`Welcome ${name}! You are now authenticated.`);
-      
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else {
-      // Check if user is already authenticated
-      checkAuthStatus();
-    }
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        const response = await axios.get('http://localhost:8000/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(response.data);
-        setFormData({
-          ...formData,
-          name: response.data.name || '',
-          email: response.data.email || ''
-        });
-      }
-    } catch (error) {
-      localStorage.removeItem('access_token');
-      console.log('No valid authentication found');
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setIsAuthenticating(true);
-    try {
-      // Redirect to backend Google OAuth
-      window.location.href = 'http://localhost:8000/api/auth/google';
-    } catch (error) {
-      setIsAuthenticating(false);
-      toast.error('Failed to initiate Google authentication');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    setUser(null);
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setErrors({});
-    setSuccess(false);
-    toast.info('Logged out successfully.');
-  };
 
   return (
     <div>
@@ -198,75 +135,18 @@ const Contact = () => {
           <Row className="contact-row g-4">
             <Col lg={8} className="contact-form-col">
               <Card className="shadow-sm contact-card">
-                <Card.Header className="d-flex justify-content-between align-items-center">
+                <Card.Header>
                   <h4 className="mb-0">Send us a Message</h4>
-                  {user && (
-                    <div className="d-flex align-items-center">
-                      <img 
-                        src={user.picture} 
-                        alt={user.name}
-                        className="rounded-circle me-2"
-                        width="32"
-                        height="32"
-                      />
-                      <span className="me-2 text-muted">{user.name}</span>
-                      <Button 
-                        variant="outline-secondary" 
-                        size="sm"
-                        onClick={handleLogout}
-                      >
-                        <i className="bi bi-box-arrow-right"></i>
-                      </Button>
-                    </div>
-                  )}
                 </Card.Header>
                 <Card.Body className="p-4">
-                  {!user ? (
-                    <div className="text-center py-4">
-                      <h5 className="mb-3">Please sign in with Google to send a message</h5>
-                      <p className="text-muted mb-4">
-                        We use Google authentication to ensure secure communication and prevent spam.
-                      </p>
-                      <div className="google-auth-container">
-                        <Button
-                          variant="outline-primary"
-                          size="lg"
-                          className="w-100 mb-3 google-auth-btn"
-                          onClick={handleGoogleLogin}
-                          disabled={isAuthenticating}
-                        >
-                          {isAuthenticating ? (
-                            <>
-                              <Spinner animation="border" size="sm" className="me-2" />
-                              Connecting...
-                            </>
-                          ) : (
-                            <>
-                              <svg className="me-2" width="18" height="18" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                              </svg>
-                              Continue with Google
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                      <small className="text-muted">
-                        Your information is secure and will only be used for contact purposes.
-                      </small>
-                    </div>
-                  ) : (
-                    <>
-                      {success && (
-                        <Alert variant="success">
-                          <i className="bi bi-check-circle me-2"></i>
-                          Thank you for your message! We'll respond within 24 hours.
-                        </Alert>
-                      )}
+                  {success && (
+                    <Alert variant="success">
+                      <i className="bi bi-check-circle me-2"></i>
+                      Thank you for your message! We'll respond within 24 hours.
+                    </Alert>
+                  )}
 
-                      <Form onSubmit={handleSubmit}>
+                  <Form onSubmit={handleSubmit}>
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
@@ -389,10 +269,8 @@ const Contact = () => {
                         <i className="bi bi-arrow-clockwise me-2"></i>
                         Reset Form
                       </Button>
-                        </div>
-                      </Form>
-                    </>
-                  )}
+                    </div>
+                  </Form>
                 </Card.Body>
               </Card>
             </Col>
@@ -457,123 +335,12 @@ const Contact = () => {
                     </div>
                   </Card.Body>
                 </Card>
-
-                {/* Quick Links */}
-                <Card>
-                  <Card.Header>
-                    <h5 className="mb-0">Quick Links</h5>
-                  </Card.Header>
-                  <Card.Body>
-                    <div className="d-grid gap-2">
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm"
-                        className="quick-action-btn"
-                        onClick={() => window.open('#', '_blank')}
-                      >
-                        <i className="bi bi-file-earmark-pdf me-2"></i>
-                        Download Brochure
-                      </Button>
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm"
-                        className="quick-action-btn"
-                        onClick={() => window.open('#', '_blank')}
-                      >
-                        <i className="bi bi-play-circle me-2"></i>
-                        Watch Demo Video
-                      </Button>
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm"
-                        className="quick-action-btn"
-                        onClick={() => window.scrollTo({top: document.querySelector('.bg-light').offsetTop, behavior: 'smooth'})}
-                      >
-                        <i className="bi bi-question-circle me-2"></i>
-                        View FAQ
-                      </Button>
-                      <Button 
-                        variant="primary" 
-                        size="sm"
-                        className="quick-action-btn"
-                        onClick={handleDirectEmail}
-                      >
-                        <i className="bi bi-envelope-plus me-2"></i>
-                        Quick Email
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
               </div>
             </Col>
           </Row>
         </Container>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-5 bg-light">
-        <Container>
-          <Row>
-            <Col lg={8} className="mx-auto">
-              <h2 className="text-center fw-bold mb-5">Frequently Asked Questions</h2>
-              
-              <div className="accordion" id="faqAccordion">
-                <div className="accordion-item">
-                  <h2 className="accordion-header">
-                    <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                      How accurate is the AI damage assessment?
-                    </button>
-                  </h2>
-                  <div id="faq1" className="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                    <div className="accordion-body">
-                      Our AI achieves 99.2% accuracy in damage detection and assessment, backed by extensive training on millions of claim images and continuous learning from real-world data.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="accordion-item">
-                  <h2 className="accordion-header">
-                    <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                      How quickly can claims be processed?
-                    </button>
-                  </h2>
-                  <div id="faq2" className="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                    <div className="accordion-body">
-                      Most claims are processed in under 30 seconds, compared to traditional processing times of weeks or months. Complex cases may take a few minutes for thorough analysis.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="accordion-item">
-                  <h2 className="accordion-header">
-                    <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                      Is my data secure with InsuranceAI?
-                    </button>
-                  </h2>
-                  <div id="faq3" className="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                    <div className="accordion-body">
-                      Yes, we use enterprise-grade security with end-to-end encryption, secure cloud infrastructure, and comply with all major data protection regulations including GDPR and CCPA.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="accordion-item">
-                  <h2 className="accordion-header">
-                    <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                      Can InsuranceAI integrate with existing systems?
-                    </button>
-                  </h2>
-                  <div id="faq4" className="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                    <div className="accordion-body">
-                      Absolutely! Our platform offers comprehensive REST APIs, webhooks, and pre-built integrations for major insurance management systems. Our team provides full integration support.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-      </section>
     </div>
   );
 };

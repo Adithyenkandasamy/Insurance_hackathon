@@ -41,47 +41,6 @@ const ReportGenerator = ({ claim, showModal = false, onHide = () => {} }) => {
     }
   };
 
-  const downloadClaimData = async () => {
-    if (!claim) return;
-
-    try {
-      const claimData = {
-        claim_details: {
-          id: claim.id,
-          policy_number: claim.policy_number,
-          accident_date: claim.accident_date,
-          location: claim.location,
-          description: claim.description,
-          status: claim.status,
-          created_at: claim.created_at,
-          updated_at: claim.updated_at
-        },
-        assessment: {
-          damage_score: claim.damage_score,
-          cost_estimate: claim.cost_estimate,
-          fraud_score: claim.fraud_score
-        },
-        ai_analysis: claim.ai_analysis || {},
-        images: claim.images || []
-      };
-
-      const dataStr = JSON.stringify(claimData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      
-      const url = window.URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `claim_${claim.id}_data.json`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      toast.success('Claim data exported successfully');
-    } catch (error) {
-      toast.error('Failed to export claim data');
-    }
-  };
 
   const getStatusColor = (status) => {
     const colors = {
@@ -110,14 +69,6 @@ const ReportGenerator = ({ claim, showModal = false, onHide = () => {} }) => {
         >
           <i className="bi bi-file-earmark-pdf me-2"></i>
           Download PDF
-        </Button>
-        <Button 
-          variant="outline-secondary" 
-          onClick={downloadClaimData}
-          disabled={!claim}
-        >
-          <i className="bi bi-file-earmark-code me-2"></i>
-          Export Data
         </Button>
       </div>
     );
@@ -189,13 +140,6 @@ const ReportGenerator = ({ claim, showModal = false, onHide = () => {} }) => {
                           Generate {reportFormat.toUpperCase()} Report
                         </>
                       )}
-                    </Button>
-                    <Button 
-                      variant="outline-secondary" 
-                      onClick={downloadClaimData}
-                    >
-                      <i className="bi bi-file-earmark-code me-2"></i>
-                      Export Raw Data (JSON)
                     </Button>
                   </div>
                 </Card.Body>
