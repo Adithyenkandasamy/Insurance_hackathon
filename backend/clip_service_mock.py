@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """
-CLIP-based Car Verification Service
-Standalone FastAPI service for verifying car images using OpenAI's CLIP model
+CLIP Car Verification Service - Mock Version
+Standalone FastAPI service for car image verification (mock implementation for testing)
 """
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from typing import Optional
 from PIL import Image
-import torch
-import clip
 import numpy as np
 import io
 import logging
@@ -24,19 +22,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Load CLIP model once at startup
-device = "cuda" if torch.cuda.is_available() else "cpu"
-logger.info(f"Loading CLIP model on device: {device}")
-
-try:
-    model, preprocess = clip.load("ViT-B/32", device=device)
-    logger.info("CLIP model loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load CLIP model: {e}")
-    model, preprocess = None, None
+# Mock model status
+model_loaded = True
+device = "cpu"
 
 # Dictionary to temporarily store uploaded images per user/session
-# In production, use proper storage or DB with user sessions
 uploaded_images = {
     "front": None,
     "back": None,
@@ -44,35 +34,43 @@ uploaded_images = {
     "right": None
 }
 
-def get_embedding(file_bytes):
-    if model is None:
-        raise HTTPException(status_code=500, detail="CLIP model not loaded")
-    
+def get_mock_embedding(file_bytes):
+    """Generate mock embedding for testing"""
     try:
         image = Image.open(io.BytesIO(file_bytes))
         # Convert to RGB if needed
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        image = preprocess(image).unsqueeze(0).to(device)
-        with torch.no_grad():
-            emb = model.encode_image(image)
-            emb = emb / emb.norm(dim=-1, keepdim=True)
-        return emb.cpu().numpy()
+        # Generate mock embedding based on image properties
+        img_array = np.array(image)
+        # Use image statistics to create a consistent "embedding"
+        mean_color = np.mean(img_array, axis=(0, 1))
+        std_color = np.std(img_array, axis=(0, 1))
+        
+        # Create a 512-dimensional mock embedding
+        embedding = np.concatenate([
+            mean_color / 255.0,  # Normalized mean colors
+            std_color / 255.0,   # Normalized std colors
+            [image.size[0] / 1000.0, image.size[1] / 1000.0],  # Normalized dimensions
+            np.random.random(504)  # Random features to fill 512 dimensions
+        ])
+        
+        return embedding.reshape(1, -1)
     except Exception as e:
         logger.error(f"Error processing image: {e}")
         raise HTTPException(status_code=400, detail=f"Image processing failed: {str(e)}")
 
 def cosine_sim(a, b):
     """Calculate cosine similarity between two embeddings"""
-    return np.dot(a.flatten(), b.flatten())
+    return np.dot(a.flatten(), b.flatten()) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 @app.get("/")
 async def root():
     """Health check endpoint"""
     return {
-        "message": "CLIP Car Verification Service is running",
-        "model_loaded": model is not None,
+        "message": "CLIP Car Verification Service is running (Mock Mode)",
+        "model_loaded": model_loaded,
         "device": device,
         "uploaded_images": {k: v is not None for k, v in uploaded_images.items()}
     }
@@ -136,7 +134,7 @@ async def upload_right(file: UploadFile = File(...)):
 @app.get("/check_car")
 async def check_car(threshold: float = 0.85):
     """
-    Check if all uploaded images are from the same car using CLIP similarity
+    Check if all uploaded images are from the same car using mock CLIP similarity
     
     Args:
         threshold: Minimum similarity threshold (default: 0.85)
@@ -153,12 +151,12 @@ async def check_car(threshold: float = 0.85):
         )
 
     try:
-        # Get embeddings for all images
-        logger.info("Computing CLIP embeddings for all images...")
+        # Get mock embeddings for all images
+        logger.info("Computing mock CLIP embeddings for all images...")
         embeddings = []
         for angle, img_bytes in uploaded_images.items():
             if img_bytes is not None:
-                emb = get_embedding(img_bytes)
+                emb = get_mock_embedding(img_bytes)
                 embeddings.append(emb)
         
         names = [angle for angle, img in uploaded_images.items() if img is not None]
@@ -177,7 +175,7 @@ async def check_car(threshold: float = 0.85):
         avg_sim = float(np.mean([s["similarity"] for s in sims]))
         same_car = all(s["similarity"] > threshold for s in sims)
         
-        logger.info(f"Verification complete: avg_sim={avg_sim:.3f}, same_car={same_car}")
+        logger.info(f"Mock verification complete: avg_sim={avg_sim:.3f}, same_car={same_car}")
         
         return {
             "similarities": sims,
@@ -185,7 +183,8 @@ async def check_car(threshold: float = 0.85):
             "same_car": same_car,
             "threshold_used": threshold,
             "total_comparisons": len(sims),
-            "verification_status": "verified" if same_car else "needs_review"
+            "verification_status": "verified" if same_car else "needs_review",
+            "note": "Using mock CLIP embeddings for testing"
         }
         
     except Exception as e:
@@ -212,17 +211,18 @@ async def get_status():
         "uploaded_images": {k: v is not None for k, v in uploaded_images.items()},
         "total_uploaded": sum(1 for v in uploaded_images.values() if v is not None),
         "ready_for_verification": all(v is not None for v in uploaded_images.values()),
-        "model_loaded": model is not None,
-        "device": device
+        "model_loaded": model_loaded,
+        "device": device,
+        "mode": "mock"
     }
 
-def start_service(port: int = 8000):
+def start_service(port: int = 8001):
     """Start the CLIP car verification service locally"""
-    logger.info(f"🚀 Starting CLIP Car Verification Service on port {port}")
+    logger.info(f"🚀 Starting CLIP Car Verification Service (Mock) on port {port}")
     logger.info(f"📋 API Documentation: http://localhost:{port}/docs")
     logger.info(f"🌐 Service URL: http://localhost:{port}")
     
-    print(f"CLIP Car Verification Service")
+    print(f"CLIP Car Verification Service (Mock Mode)")
     print(f"Service URL: http://localhost:{port}")
     print(f"API Documentation: http://localhost:{port}/docs")
     print("=" * 50)
@@ -231,7 +231,7 @@ def start_service(port: int = 8000):
     uvicorn.run(app, host="0.0.0.0", port=port, reload=False, log_level="info")
 
 if __name__ == "__main__":
-    # Configuration
-    PORT = 8000
+    # Configuration - using port 8001 to avoid conflict with main API
+    PORT = 8001
     
     start_service(port=PORT)
