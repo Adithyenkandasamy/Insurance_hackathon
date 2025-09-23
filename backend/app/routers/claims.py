@@ -11,6 +11,7 @@ from ..database import get_database
 from ..models import User, Claim, ClaimImage
 from ..schemas import ClaimResponse, ClaimStatusUpdate
 from ..auth import get_current_user, get_admin_user
+from ..utils.car_verification import car_verifier
 
 router = APIRouter(prefix="/claims", tags=["claims"])
 
@@ -24,7 +25,7 @@ try:
     sys.path.append('../..')
     from models.damage_assessor import DamageAssessor
     from models.fraud_detector import FraudDetector
-    from utils.report_generator import ReportGenerator
+    from ..utils.report_generator import ReportGenerator
     damage_assessor = DamageAssessor()
     fraud_detector = FraudDetector()
     report_generator = ReportGenerator()
@@ -141,19 +142,43 @@ async def create_claim(
     damage_results = damage_assessor.analyze_images(image_paths)
     fraud_results = fraud_detector.check_images(image_paths)
     
+    # Run car verification analysis
+    car_verification_results = {}
+    if image_paths:
+        try:
+            # Create angle mapping for car verification
+            angle_paths = {}
+            for i, path in enumerate(image_paths):
+                angle = f"angle_{i}"  # Default angle naming
+                angle_paths[angle] = path
+            
+            car_verification_results = await car_verifier.verify_multiple_angles(angle_paths)
+        except Exception as e:
+            car_verification_results = {
+                'verified': False,
+                'score': 0,
+                'message': f'Car verification failed: {str(e)}',
+                'angle_results': {}
+            }
+    
+    # Combine scores - car verification score affects overall assessment
+    car_verification_score = car_verification_results.get('score', 0)
+    combined_fraud_score = (fraud_results['fraud_score'] + (1 - car_verification_score)) / 2
+    
     # Update claim with AI results
     claim.damage_score = damage_results['damage_score']
     claim.cost_estimate = damage_results['cost_estimate']
-    claim.fraud_score = fraud_results['fraud_score']
+    claim.fraud_score = min(combined_fraud_score, 1.0)  # Cap at 1.0
     claim.ai_analysis = {
         'damage_analysis': damage_results,
-        'fraud_analysis': fraud_results
+        'fraud_analysis': fraud_results,
+        'car_verification': car_verification_results
     }
     
-    # Auto-approve or flag for review
-    if fraud_results['fraud_score'] > 0.7:
+    # Auto-approve or flag for review based on combined scores
+    if combined_fraud_score > 0.7 or not car_verification_results.get('verified', False):
         claim.status = 'review'
-    elif damage_results['confidence'] > 0.8:
+    elif damage_results['confidence'] > 0.8 and car_verification_results.get('verified', False):
         claim.status = 'approved'
     else:
         claim.status = 'review'
@@ -162,6 +187,47 @@ async def create_claim(
     db.refresh(claim)
     
     return claim
+
+@router.get("/{claim_id}/scores")
+async def get_claim_scores(
+    claim_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database)
+):
+    """Get AI analysis scores for a claim"""
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    # Check permission
+    if not current_user.is_admin and claim.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return {
+        "claim_id": claim.id,
+        "damage_score": claim.damage_score,
+        "fraud_score": claim.fraud_score,
+        "cost_estimate": claim.cost_estimate,
+        "status": claim.status,
+        "ai_analysis": claim.ai_analysis,
+        "scores_breakdown": {
+            "damage_assessment": {
+                "score": claim.damage_score,
+                "confidence": claim.ai_analysis.get('damage_analysis', {}).get('confidence', 0) if claim.ai_analysis else 0,
+                "severity": claim.ai_analysis.get('damage_analysis', {}).get('severity', 'unknown') if claim.ai_analysis else 'unknown'
+            },
+            "fraud_detection": {
+                "score": claim.fraud_score,
+                "risk_level": claim.ai_analysis.get('fraud_analysis', {}).get('risk_level', 'unknown') if claim.ai_analysis else 'unknown',
+                "is_suspicious": claim.ai_analysis.get('fraud_analysis', {}).get('is_suspicious', False) if claim.ai_analysis else False
+            },
+            "car_verification": {
+                "verified": claim.ai_analysis.get('car_verification', {}).get('verified', False) if claim.ai_analysis else False,
+                "score": claim.ai_analysis.get('car_verification', {}).get('score', 0) if claim.ai_analysis else 0,
+                "message": claim.ai_analysis.get('car_verification', {}).get('message', 'Not verified') if claim.ai_analysis else 'Not verified'
+            }
+        }
+    }
 
 @router.get("/{claim_id}/report")
 async def generate_report(
@@ -202,3 +268,33 @@ async def generate_report(
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+
+@router.delete("/{claim_id}")
+async def delete_claim(
+    claim_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database)
+):
+    """Delete a claim and all associated data"""
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    # Check permission - only admin or claim owner can delete
+    if not current_user.is_admin and claim.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Delete associated images from filesystem
+    images = db.query(ClaimImage).filter(ClaimImage.claim_id == claim_id).all()
+    for image in images:
+        if os.path.exists(image.image_path):
+            try:
+                os.remove(image.image_path)
+            except OSError:
+                pass  # Continue even if file deletion fails
+    
+    # Delete from database (cascade will handle related records)
+    db.delete(claim)
+    db.commit()
+    
+    return {"message": "Claim deleted successfully", "claim_id": claim_id}
